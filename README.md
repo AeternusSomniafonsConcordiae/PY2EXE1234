@@ -29,4 +29,4 @@ Copyright (C) 2025 AeternusSomniafonsConcordiae. All Rights Reserved.
 2. **PRETEND YOU NEVER SAW IT.**  
 3. **GO OUTSIDE AND TOUCH GRASS.**  
 
-© 2025 AeternusSomnuafonsConcordiae. **ALL RIGHTS RESERVED (Seriously, none for you).**
+© 2025 AeternusSomniafonsConcordiae. **ALL RIGHTS RESERVED (Seriously, none for you).**
