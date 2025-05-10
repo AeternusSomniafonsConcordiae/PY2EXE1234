@@ -9,7 +9,7 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install PyInstaller
+      - name: Install PyInstaller and Pillow
         run: pip install pyinstaller pillow
       - name: Build EXE with icon
         run: pyinstaller --onefile --icon=kernel-icon.png kernel32.py
