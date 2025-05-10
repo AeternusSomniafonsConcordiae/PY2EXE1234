@@ -1,4 +1,4 @@
-PY2EXE1234 – END USER LICENSE AGREEMENT (EULA)  
+# PY2EXE1234 – END USER LICENSE AGREEMENT (EULA)  
 
 Copyright (C) 2025 AeternusSomniafonsConcordiae. All Rights Reserved.  
 
