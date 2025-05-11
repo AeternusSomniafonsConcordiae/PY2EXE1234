@@ -52,7 +52,7 @@ jobs:
       - name: Compile with Nuitka
         run: |
           python -m nuitka --onefile `
-                 --windows-disable-console `
+                 --windows-console-mode=disable `
                  --remove-output `
                  --windows-icon-from-ico=icon.ico `
                  --windows-company-name="${{ steps.version.outputs.company }}" `
@@ -62,6 +62,7 @@ jobs:
                  --windows-product-version="${{ steps.version.outputs.version }}" `
                  --output-filename="KeyboardManager.exe" `
                  --include-package=pynput `
+                 --assume-yes-for-downloads `
                  ./build/script.py
 
       - name: Upload artifact
