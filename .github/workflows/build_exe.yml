@@ -2,7 +2,7 @@ name: Build Windows EXE
 on:
   push:
     paths:
-      - 'KeyboardManager.py'
+      - 'script.py'
       - 'icon.ico'
       - 'version_info.txt'
   workflow_dispatch:
@@ -41,7 +41,7 @@ jobs:
 
       - name: Obfuscate code
         run: |
-          pyarmor gen --output ./build KeyboardManager.py
+          pyarmor gen --output ./build script.py
 
       - name: Compile with Nuitka
         run: |
@@ -57,7 +57,7 @@ jobs:
                  --windows-product-version="${{ steps.version.outputs.version }}" `
                  --output-filename="KeyboardManager.exe" `
                  --include-package=pynput `
-                 ./build/KeyboardManager.py
+                 ./build/script.py
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
