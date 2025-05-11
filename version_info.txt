@@ -1,6 +1,6 @@
 # UTF-8
 VersionInfo(
-    version="1.0.0",
+    version="1.0.1",
     company_name="KeyOnTheBoard",
     file_description="Keyboard Input Manager",
     legal_copyright="© 2025 KeyOnTheBoard. All rights reserved.",
