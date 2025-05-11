@@ -21,19 +21,40 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install nuitka pyarmor pynput
+          pip install nuitka pyarmor==7.7.4 pynput
+
+      - name: Parse version info
+        id: version
+        run: |
+          $content = Get-Content version_info.txt -Raw
+          $version = ($content | Select-String 'version="([^"]+)"').Matches.Groups[1].Value
+          $company = ($content | Select-String 'company_name="([^"]+)"').Matches.Groups[1].Value
+          $description = ($content | Select-String 'file_description="([^"]+)"').Matches.Groups[1].Value
+          $copyright = ($content | Select-String 'legal_copyright="([^"]+)"').Matches.Groups[1].Value
+          $product = ($content | Select-String 'product_name="([^"]+)"').Matches.Groups[1].Value
+          
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "company=$company" >> $env:GITHUB_OUTPUT
+          echo "description=$description" >> $env:GITHUB_OUTPUT
+          echo "copyright=$copyright" >> $env:GITHUB_OUTPUT
+          echo "product=$product" >> $env:GITHUB_OUTPUT
 
       - name: Obfuscate code
         run: |
-          pyarmor obfuscate --recursive --output ./build script.py
+          python -m pyarmor obfuscate --recursive --output ./build script.py
 
       - name: Compile with Nuitka
         run: |
-          nuitka --onefile `
+          python -m nuitka --onefile `
                  --windows-disable-console `
                  --remove-output `
                  --windows-icon-from-ico=icon.ico `
-                 --windows-version-info=version_info.txt `
+                 --windows-company-name="${{ steps.version.outputs.company }}" `
+                 --windows-file-description="${{ steps.version.outputs.description }}" `
+                 --windows-legal-copyright="${{ steps.version.outputs.copyright }}" `
+                 --windows-product-name="${{ steps.version.outputs.product }}" `
+                 --windows-file-version="${{ steps.version.outputs.version }}" `
+                 --windows-product-version="${{ steps.version.outputs.version }}" `
                  --output-filename="KeyboardManager.exe" `
                  --include-data-dir=./build=./ `
                  ./build/script.py
@@ -43,4 +64,4 @@ jobs:
         with:
           name: KeyboardManager
           path: KeyboardManager.exe
-          retention-days: 3  # Auto-clean old artifacts
+          retention-days: 3
