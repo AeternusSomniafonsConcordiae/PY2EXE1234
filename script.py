@@ -1,6 +1,6 @@
-# safe_keyboard_cleaner.py
-# Description: A utility to filter keyboard input (educational use)
-# Author: YourName
+# Name: KeyboardManager
+# Description: A utility to filter keyboard input
+# Author: KeyOnTheBoard
 # Version: 1.0.0
 
 import time
