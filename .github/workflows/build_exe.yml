@@ -1,5 +1,9 @@
 name: Build Windows EXE
-on: [push]
+on:
+  push:
+    paths:
+      - 'script.py'
+      - 'icon.ico'
 
 jobs:
   build:
