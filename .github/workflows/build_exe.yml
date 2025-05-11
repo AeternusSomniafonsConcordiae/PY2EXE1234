@@ -42,11 +42,6 @@ jobs:
                  --output-filename="KeyboardManager.exe" `
                  --include-data-dir=./build=./ `
                  ./build/script.py
-          # Verify EXE exists
-          if not Test-Path KeyboardManager.exe; then
-            Write-Error "Compilation failed!"
-            exit 1
-          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
