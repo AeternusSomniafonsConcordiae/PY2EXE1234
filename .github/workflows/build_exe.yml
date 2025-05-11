@@ -4,7 +4,7 @@ on:
     paths:
       - 'script.py'
       - 'icon.ico'
-      - 'version.rc'
+      - 'version_info.txt'
   workflow_dispatch:
 
 jobs:
@@ -17,7 +17,7 @@ jobs:
         run: |
           if (-not (Test-Path "script.py")) { throw "script.py not found" }
           if (-not (Test-Path "icon.ico")) { throw "icon.ico not found" }
-          if (-not (Test-Path "version.rc")) { throw "version.rc not found" }
+          if (-not (Test-Path "version_info.txt")) { throw "version_info.txt not found" }
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -29,6 +29,22 @@ jobs:
           python -m pip install --upgrade pip
           pip install nuitka pynput pyarmor
 
+      - name: Parse version info
+        id: version
+        run: |
+          $content = Get-Content version_info.txt -Raw
+          $version = ($content | Select-String 'version="([^"]+)"').Matches.Groups[1].Value
+          $company = ($content | Select-String 'company_name="([^"]+)"').Matches.Groups[1].Value
+          $description = ($content | Select-String 'file_description="([^"]+)"').Matches.Groups[1].Value
+          $copyright = ($content | Select-String 'legal_copyright="([^"]+)"').Matches.Groups[1].Value
+          $product = ($content | Select-String 'product_name="([^"]+)"').Matches.Groups[1].Value
+          
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "company=$company" >> $env:GITHUB_OUTPUT
+          echo "description=$description" >> $env:GITHUB_OUTPUT
+          echo "copyright=$copyright" >> $env:GITHUB_OUTPUT
+          echo "product=$product" >> $env:GITHUB_OUTPUT
+
       - name: Obfuscate code
         run: |
           pyarmor gen --output ./build script.py
@@ -39,7 +55,11 @@ jobs:
                  --windows-disable-console `
                  --remove-output `
                  --windows-icon-from-ico=icon.ico `
-                 --windows-version-file=version.rc `
+                 --windows-company-name="${{ steps.version.outputs.company }}" `
+                 --windows-file-description="${{ steps.version.outputs.description }}" `
+                 --windows-file-version="${{ steps.version.outputs.version }}" `
+                 --windows-product-name="${{ steps.version.outputs.product }}" `
+                 --windows-product-version="${{ steps.version.outputs.version }}" `
                  --output-filename="KeyboardManager.exe" `
                  --include-package=pynput `
                  ./build/script.py
