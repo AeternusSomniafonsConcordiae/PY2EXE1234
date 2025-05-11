@@ -4,38 +4,54 @@ on:
     paths:
       - 'script.py'
       - 'icon.ico'
+      - 'version_info.txt'
+  workflow_dispatch:  # Allow manual triggers
 
 jobs:
   build:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v4  # Get your code
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'  # Cache dependencies for faster builds
 
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install nuitka pyarmor pynput
-          # Add other dependencies if needed (e.g., pynput)
 
       - name: Obfuscate code
         run: |
           pyarmor obfuscate --recursive --output ./build script.py
+          # Verify obfuscation worked
+          if not Test-Path ./build/script.py; then
+            Write-Error "Obfuscation failed!"
+            exit 1
+          fi
 
       - name: Compile with Nuitka
         run: |
-          nuitka --onefile --windows-disable-console --remove-output \
-            --windows-icon-from-ico=kernel-icon.ico \
-            --windows-version-info=version_info.txt \
-            --output-filename="KeyboardManager.exe" \
-            --include-data-dir=./build=./ \
-            ./build/script.py
+          nuitka --onefile `
+                 --windows-disable-console `
+                 --remove-output `
+                 --windows-icon-from-ico=icon.ico `
+                 --windows-version-info=version_info.txt `
+                 --output-filename="KeyboardManager.exe" `
+                 --include-data-dir=./build=./ `
+                 ./build/script.py
+          # Verify EXE exists
+          if not Test-Path KeyboardManager.exe; then
+            Write-Error "Compilation failed!"
+            exit 1
+          fi
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: KeyboardManager
           path: KeyboardManager.exe
+          retention-days: 3  # Auto-clean old artifacts
