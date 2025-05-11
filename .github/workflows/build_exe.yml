@@ -26,11 +26,6 @@ jobs:
       - name: Obfuscate code
         run: |
           pyarmor obfuscate --recursive --output ./build script.py
-          # Verify obfuscation worked
-          if not Test-Path ./build/script.py; then
-            Write-Error "Obfuscation failed!"
-            exit 1
-          fi
 
       - name: Compile with Nuitka
         run: |
