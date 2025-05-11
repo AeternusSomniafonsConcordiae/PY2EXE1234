@@ -41,7 +41,7 @@ jobs:
 
       - name: Obfuscate code
         run: |
-          pyarmor gen -O ./build --exact KeyboardManager.py
+          pyarmor gen --output ./build KeyboardManager.py
 
       - name: Compile with Nuitka
         run: |
