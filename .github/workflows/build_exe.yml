@@ -13,6 +13,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Verify files exist
+        run: |
+          if (-not (Test-Path "script.py")) { throw "script.py not found" }
+          if (-not (Test-Path "icon.ico")) { throw "icon.ico not found" }
+          if (-not (Test-Path "version_info.txt")) { throw "version_info.txt not found" }
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -43,18 +49,44 @@ jobs:
         run: |
           pyarmor gen --output ./build script.py
 
+      - name: Create version resource file
+        run: |
+          @"
+          VS_VERSION_INFO VERSIONINFO
+          FILEVERSION ${{ steps.version.outputs.version.split('.')[0 }},${{ steps.version.outputs.version.split('.')[1 }},${{ steps.version.outputs.version.split('.')[2 }},0
+          PRODUCTVERSION ${{ steps.version.outputs.version.split('.')[0 }},${{ steps.version.outputs.version.split('.')[1 }},${{ steps.version.outputs.version.split('.')[2 }},0
+          FILEFLAGSMASK 0x3fL
+          FILEFLAGS 0x0L
+          FILEOS 0x40004L
+          FILETYPE 0x1L
+          FILESUBTYPE 0x0L
+          BEGIN
+              BLOCK "StringFileInfo"
+              BEGIN
+                  BLOCK "040904b0"
+                  BEGIN
+                      VALUE "CompanyName", "${{ steps.version.outputs.company }}"
+                      VALUE "FileDescription", "${{ steps.version.outputs.description }}"
+                      VALUE "FileVersion", "${{ steps.version.outputs.version }}"
+                      VALUE "LegalCopyright", "${{ steps.version.outputs.copyright }}"
+                      VALUE "ProductName", "${{ steps.version.outputs.product }}"
+                      VALUE "ProductVersion", "${{ steps.version.outputs.version }}"
+                  END
+              END
+              BLOCK "VarFileInfo"
+              BEGIN
+                  VALUE "Translation", 0x409, 1200
+              END
+          END
+          "@ | Out-File -FilePath version.rc -Encoding ASCII
+
       - name: Compile with Nuitka
         run: |
           python -m nuitka --onefile `
                  --windows-disable-console `
                  --remove-output `
                  --windows-icon-from-ico=icon.ico `
-                 --windows-company-name="${{ steps.version.outputs.company }}" `
-                 --windows-file-description="${{ steps.version.outputs.description }}" `
-                 --windows-legal-copyright="${{ steps.version.outputs.copyright }}" `
-                 --windows-product-name="${{ steps.version.outputs.product }}" `
-                 --windows-file-version="${{ steps.version.outputs.version }}" `
-                 --windows-product-version="${{ steps.version.outputs.version }}" `
+                 --windows-version-file=version.rc `
                  --output-filename="KeyboardManager.exe" `
                  --include-package=pynput `
                  ./build/script.py
