@@ -5,7 +5,7 @@ on:
       - 'script.py'
       - 'icon.ico'
       - 'version_info.txt'
-  workflow_dispatch:  # Allow manual triggers
+  workflow_dispatch:
 
 jobs:
   build:
@@ -22,7 +22,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install nuitka pynput
-          pip install pyarmor==7.7.4  # Explicitly install PyArmor 7.x
+          pip install pyarmor==7.7.4
 
       - name: Parse version info
         id: version
@@ -42,7 +42,7 @@ jobs:
 
       - name: Obfuscate code
         run: |
-          pyarmor-7 obfuscate --recursive --output ./build script.py
+          python -m pyarmor obfuscate --recursive --output ./build script.py
 
       - name: Compile with Nuitka
         run: |
