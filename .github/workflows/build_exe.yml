@@ -42,6 +42,7 @@ jobs:
                      --name "virus.exe" `
                      --add-data "icon.ico;." `
                      --hidden-import "pynput" `
+                     --hidden-import "psutil" `
                      --upx-dir="C:\upx" `
                      ./dist/script.py
 
