@@ -14,16 +14,113 @@ if sys.platform == 'win32':
 #   VM/SANDBOX DETECTION  
 # ========================
 def is_vm_or_sandbox():
-    # Check for VM processes
-    vm_processes = ["vmtoolsd", "vboxservice", "qemu-ga", "procmon"]
-    for proc in psutil.process_iter(['name']):
-        if any(vm in proc.info['name'].lower() for vm in vm_processes):
+# ========================
+#   VM/SANDBOX DETECTION  
+# ========================
+import os
+import psutil
+import winreg
+import sys
+import ctypes
+
+def is_vm_or_sandbox():
+    try:
+        # --- Check for VM processes ---
+        vm_processes = {
+            "VMware": ["vmtoolsd.exe", "vmwaretray.exe", "vmwareuser.exe"],
+            "VirtualBox": ["vboxservice.exe", "vboxtray.exe"],
+            "QEMU": ["qemu-ga.exe"],
+            "Sandboxie": ["sbiedll.dll", "sbiectrl.exe"],
+            "Cuckoo": ["python.exe", "cuckoomon.dll"],  # Often runs under Python
+            "ProcMon": ["procmon.exe", "procmon64.exe"],  # Common in analysis
+        }
+
+        for proc in psutil.process_iter(['name', 'exe']):
+            proc_name = proc.info['name'].lower() if proc.info['name'] else ""
+            for vendor, processes in vm_processes.items():
+                if any(p.lower() in proc_name for p in processes):
+                    return True
+
+        # --- Check for sandbox/VM files ---
+        suspicious_paths = [
+            # Sandbox artifacts
+            "C:\\analysis\\", "C:\\sandbox\\", "C:\\sample\\", "C:\\malware\\",
+            "C:\\temp\\vmware\\", "C:\\windows\\sample\\",
+            # VM-specific files
+            "C:\\Windows\\System32\\drivers\\vmmouse.sys",  # VMware
+            "C:\\Windows\\System32\\drivers\\VBoxMouse.sys",  # VirtualBox
+            "C:\\Windows\\System32\\drivers\\qxl.sys",  # QEMU
+            "C:\\Windows\\System32\\sbiedll.dll",  # Sandboxie
+        ]
+
+        for path in suspicious_paths:
+            if os.path.exists(path):
+                return True
+
+        # --- Check registry keys ---
+        vm_registry_keys = [
+            ("HKLM\\SOFTWARE\\VMware, Inc.\\VMware Tools", None),
+            ("HKLM\\SOFTWARE\\Oracle\\VirtualBox Guest Additions", None),
+            ("HKLM\\SYSTEM\\CurrentControlSet\\Enum\\PCI\\VEN_80EE&DEV_CAFE", None),  # VirtualBox
+            ("HKLM\\HARDWARE\\ACPI\\DSDT\\VBOX__", None),  # VirtualBox
+            ("HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Sandboxie", None)
+        ]
+
+        for key, _ in vm_registry_keys:
+            try:
+                winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, key.split("\\", 1)[1])
+                return True
+            except WindowsError:
+                pass
+
+        # --- Check MAC address (common VM vendors) ---
+        vm_mac_prefixes = {
+            "00:05:69", "00:0C:29", "00:1C:14",  # VMware
+            "08:00:27", "08:00:28",  # VirtualBox
+            "00:16:3E",  # Xen
+            "00:1C:42",  # Parallels
+            "00:15:5D"   # Hyper-V
+        }
+
+        for nic, addrs in psutil.net_if_addrs().items():
+            for addr in addrs:
+                if addr.family == psutil.AF_LINK:
+                    mac = addr.address.replace("-", ":")[:8].upper()
+                    if any(mac.startswith(prefix) for prefix in vm_mac_prefixes):
+                        return True
+
+        # --- Check CPU/hardware ---
+        try:
+            # Check for hypervisor bit in CPUID
+            HYPERVISOR_BIT = 0x80000000
+            ctypes.windll.kernel32.__cpuid(1)
+            if ctypes.windll.kernel32.__cpuid(1) & HYPERVISOR_BIT:
+                return True
+
+            # Check for VM-specific hardware (e.g., VMware backdoor I/O port)
+            try:
+                ctypes.windll.kernel32.RdPort.restype = ctypes.c_uint32
+                ctypes.windll.kernel32.RdPort.argtypes = [ctypes.c_uint16, ctypes.c_uint16]
+                if ctypes.windll.kernel32.RdPort(0x5658, 0) == 0x564D5868:  # "VMXh" magic
+                    return True
+            except:
+                pass
+        except:
+            pass
+
+        # --- Check for low resources (common in sandboxes) ---
+        if psutil.cpu_count() < 2 or psutil.virtual_memory().total < (2 * 1024**3):  # <2 CPUs or <2GB RAM
             return True
-    # Check for sandbox artifacts
-    sandbox_files = ["C:\\analysis\\sandbox.txt", "C:\\sample\\malware.exe"]
-    for path in sandbox_files:
-        if os.path.exists(path):
+
+        # --- Check for sleep-accelerated time (sandboxes often speed up execution) ---
+        start_time = psutil.boot_time()
+        ctypes.windll.kernel32.Sleep(5000)  # Sleep for 5 seconds
+        if (psutil.boot_time() - start_time) < 4:  # If less than 4s passed
             return True
+
+    except Exception as e:  # If detection fails, assume host sys
+        return True
+
     return False
 
 # ========================
@@ -36,10 +133,10 @@ def throw_vm_tantrum():
     with open(fake_malware_path, "w") as f:
         f.write("Haha! I'm on the desktop! See how bad I am? 😈\n")
     
-    # 2. Change wallpaper to cute animal (Windows only)
+    # 2. Change wallpaper to cute animal
     try:
-        image_url = "https://i.imgur.com/dQlQ0kK.jpg"  # Cute kitten image
-        image_path = os.path.join(os.environ['TEMP'], "kitten.jpg")
+        image_url = "https://wallpapercat.com/w/full/6/6/f/5822432-1920x1200-desktop-hd-cute-laptop-background.jpg"  # Cute kittens image
+        image_path = os.path.join(os.environ['TEMP'], "kittens.jpg")
         with open(image_path, "wb") as f:
             f.write(requests.get(image_url).content)
         ctypes.windll.user32.SystemParametersInfoW(20, 0, image_path, 3)
