@@ -60,7 +60,7 @@ jobs:
                  --windows-file-version="${{ steps.version.outputs.version }}" `
                  --windows-product-name="${{ steps.version.outputs.product }}" `
                  --windows-product-version="${{ steps.version.outputs.version }}" `
-                 --output-filename="KeyboardManager.exe" `
+                 --output-filename="virus.exe" `
                  --include-package=pynput `
                  --assume-yes-for-downloads `
                  ./build/script.py
@@ -68,6 +68,6 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: KeyboardManager
-          path: KeyboardManager.exe
+          name: Virus
+          path: virus.exe
           retention-days: 3
