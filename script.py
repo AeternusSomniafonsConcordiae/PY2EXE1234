@@ -3,6 +3,7 @@ import sys
 import psutil
 import requests
 import ctypes
+import winreg
 import tkinter as tk
 from tkinter import messagebox
 
@@ -13,12 +14,6 @@ if sys.platform == 'win32':
 # ========================
 #   VM/SANDBOX DETECTION  
 # ========================
-import os
-import psutil
-import winreg
-import sys
-import ctypes
-
 def is_vm_or_sandbox():
     try:
         # --- Check for VM processes ---
