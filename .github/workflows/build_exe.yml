@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install pyinstaller requests pyarmor pynput crypto scapy
+          pip install pyinstaller requests pyarmor pynput crypto scapy psutil
 
       - name: Install UPX
         run: |
