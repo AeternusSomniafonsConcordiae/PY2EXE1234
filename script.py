@@ -6,6 +6,10 @@ import ctypes
 import tkinter as tk
 from tkinter import messagebox
 
+# Hide console window if it flashes
+if sys.platform == 'win32':
+    ctypes.windll.user32.ShowWindow(ctypes.windll.kernel32.GetConsoleWindow(), 0)
+
 # ========================
 #   VM/SANDBOX DETECTION  
 # ========================
@@ -67,13 +71,13 @@ def be_helpful():
     # Leave a gift on the desktop
     desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
     with open(os.path.join(desktop_path, "YouAreLoved.txt"), "w") as f:
-        f.write("You’re awesome! Have a great day! 🌟\n")
+        f.write("You’re awesome! Don't give up! Have a great day! 🌟\n")
 
 # ========================
 #   AV-TRIGGERING TRICKS  
 # ========================
 def scare_antiviruses():
-    # Suspicious string patterns (but do nothing)
+    # Suspicious string patterns
     scary_strings = [
         "This program is malware!!!",
         "Ransomware initialized...",
