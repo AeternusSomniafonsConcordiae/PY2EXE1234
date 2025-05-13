@@ -13,10 +13,6 @@ if sys.platform == 'win32':
 # ========================
 #   VM/SANDBOX DETECTION  
 # ========================
-def is_vm_or_sandbox():
-# ========================
-#   VM/SANDBOX DETECTION  
-# ========================
 import os
 import psutil
 import winreg
