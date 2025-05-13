@@ -4,7 +4,6 @@ on:
     paths:
       - 'script.py'
       - 'icon.ico'
-      - 'version_info.txt'
   workflow_dispatch:
 
 jobs:
@@ -17,7 +16,6 @@ jobs:
         run: |
           if (-not (Test-Path "script.py")) { throw "script.py not found" }
           if (-not (Test-Path "icon.ico")) { throw "icon.ico not found" }
-          if (-not (Test-Path "version_info.txt")) { throw "version_info.txt not found" }
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -27,47 +25,44 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install nuitka pyarmor requests
-
-      - name: Parse version info
-        id: version
-        run: |
-          $content = Get-Content version_info.txt -Raw
-          $version = ($content | Select-String 'version="([^"]+)"').Matches.Groups[1].Value
-          $company = ($content | Select-String 'company_name="([^"]+)"').Matches.Groups[1].Value
-          $description = ($content | Select-String 'file_description="([^"]+)"').Matches.Groups[1].Value
-          $copyright = ($content | Select-String 'legal_copyright="([^"]+)"').Matches.Groups[1].Value
-          $product = ($content | Select-String 'product_name="([^"]+)"').Matches.Groups[1].Value
-          
-          echo "version=$version" >> $env:GITHUB_OUTPUT
-          echo "company=$company" >> $env:GITHUB_OUTPUT
-          echo "description=$description" >> $env:GITHUB_OUTPUT
-          echo "copyright=$copyright" >> $env:GITHUB_OUTPUT
-          echo "product=$product" >> $env:GITHUB_OUTPUT
+          pip install pyinstaller requests pyarmor pynput
 
       - name: Obfuscate code
         run: |
-          pyarmor gen --output ./build script.py
+          pyarmor gen --output ./dist script.py
 
-      - name: Compile with Nuitka
+      - name: Compile with PyInstaller
         run: |
-          python -m nuitka --onefile `
-                 --windows-console-mode=disable `
-                 --remove-output `
-                 --windows-icon-from-ico=icon.ico `
-                 --windows-company-name="${{ steps.version.outputs.company }}" `
-                 --windows-file-description="${{ steps.version.outputs.description }}" `
-                 --windows-file-version="${{ steps.version.outputs.version }}" `
-                 --windows-product-name="${{ steps.version.outputs.product }}" `
-                 --windows-product-version="${{ steps.version.outputs.version }}" `
-                 --output-filename="virus.exe" `
-                 --include-package=pynput `
-                 --assume-yes-for-downloads `
-                 ./build/script.py
+          pyinstaller --noconfirm --onefile --noconsole `
+                     --icon "icon.ico" `
+                     --name "virus.exe" `
+                     --add-data "icon.ico;." `
+                     --hidden-import "pynput" `
+                     --upx-dir="C:\upx" `
+                     ./dist/script.py
+
+      - name: Make binary more suspicious
+        run: |
+          # Add junk sections
+          echo "Adding suspicious PE sections..."
+          curl -L -o pefile.py https://raw.githubusercontent.com/erocarrera/pefile/master/pefile.py
+          python -c "
+          import pefile
+          pe = pefile.PE('dist/virus.exe')
+          pe.sections[-1].Name = b'.malz'
+          pe.sections[-1].Characteristics = 0xE0000020
+          pe.write('dist/virus_modified.exe')
+          "
+          mv dist/virus_modified.exe dist/virus.exe
+      
+      - name: Add entropy (packer simulation)
+      run: |
+       # Append random data to increase entropy
+       python -c "import os; open('dist/virus.exe','ab').write(os.urandom(1024*100))"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Virus
-          path: virus.exe
-          retention-days: 3
+          name: Cute_AV_Trigger
+          path: dist/virus.exe
+          retention-days: 1
