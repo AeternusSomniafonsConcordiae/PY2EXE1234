@@ -27,7 +27,7 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install nuitka pynput pyarmor
+          pip install nuitka pyarmor requests
 
       - name: Parse version info
         id: version
