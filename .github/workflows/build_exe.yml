@@ -56,9 +56,9 @@ jobs:
           mv dist/virus_modified.exe dist/virus.exe
       
       - name: Add entropy (packer simulation)
-      run: |
-       # Append random data to increase entropy
-       python -c "import os; open('dist/virus.exe','ab').write(os.urandom(1024*100))"
+        run: |
+          # Append random data to increase entropy
+          python -c "import os; open('dist/virus.exe','ab').write(os.urandom(1024*100))"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
